@@ -2,9 +2,9 @@ from http.client import HTTPException
 import validators
 from sqlalchemy.orm import Session
 
-from shortener_app import crud
-from . import schemas, models
-from .database import SessionLocal, engine
+import crud
+import schemas, models
+from database import SessionLocal, engine
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
@@ -87,7 +87,7 @@ def get_url_info(
     else:
         raise_not_found(request)
     
-    
+     
 @app.delete("/admin/{secret_key}")
 def delete_url(
     secret_key: str, request: Request, db: Session = Depends(get_db)
