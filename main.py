@@ -7,32 +7,51 @@ import schemas, models
 from database import SessionLocal, engine
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 
-from .config import get_settings
+from config import get_settings
 from starlette.datastructures import URL
 
 
 app = FastAPI()      # defined fastApi
+origins = [ 
+    "http://domainname.com",
+    "https://domainname.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:8000"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 models.Base.metadata.create_all(bind=engine) # bind db engine -> if db in engine doesn't exist,
                                              # will be created with all modeled tabled at first time run
 def get_db():
     db = SessionLocal() # generate local db session 
     try:
-        yield db        # return db session as Generator (one-time use object)
-    except:
+        print(str(db))
+        return db        # return db session as Generator (one-time use object)
+    except Exception as e:
         print("Exception dude")
+        print(str(e))
         pass
     finally:
         db.close()
 
 def get_admin_info(db_url: models.URL) -> schemas.URLInfo:
-    base_url = URL(get_settings().base_url)
+    # base_url = URL(get_settings().base_url)
+    base_url = URL("http://159.89.214.197:8000")
     admin_endpoint = app.url_path_for(
         "administration info", secret_key=db_url.secret_key
     )
     db_url.url = str(base_url.replace(path=db_url.key))
     db_url.admin_url = str(base_url.replace(path=admin_endpoint))
 
+    print(db_url)
     return db_url
 
 def raise_not_found(request):
@@ -43,7 +62,7 @@ def raise_bad_request(message):
     raise HTTPException(status_code=400, detail=message)
 
 
-### ENDPOINT
+### ENDPOINTs
 @app.get("/")
 def read_root():
     return "Welcome to the URL shortener API :)"
